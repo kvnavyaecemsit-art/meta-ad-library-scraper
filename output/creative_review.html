@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creative Review</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --panel: #ffffff;
+    --border: #e3e3e6;
+    --text: #16161a;
+    --muted: #6b6b74;
+    --accent: #2f6fed;
+    --chip-bg: #eef2fe;
+    --chip-text: #2f4faa;
+    --good-bg: #eaf7ee;
+    --good-text: #1f7a3d;
+    --warn-bg: #fff4e5;
+    --warn-text: #935b00;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15161a;
+      --panel: #1e1f24;
+      --border: #33343a;
+      --text: #e9e9ee;
+      --muted: #97979f;
+      --accent: #6fa1ff;
+      --chip-bg: #232a42;
+      --chip-text: #a9c1ff;
+      --good-bg: #17301f;
+      --good-text: #6fe295;
+      --warn-bg: #3a2c10;
+      --warn-text: #f0b84d;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 16px; font-weight: 600; margin: 0; }
+  header .count { font-size: 12px; color: var(--muted); margin-left: auto; }
+  main { max-width: 1300px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  @media (min-width: 900px) {
+    .card { flex-direction: row; }
+    .media-col { width: 340px; flex-shrink: 0; }
+  }
+  .media-col {
+    background: var(--bg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .media-col img {
+    width: 100%;
+    border-radius: 10px;
+    display: block;
+    object-fit: cover;
+    aspect-ratio: 1 / 1;
+  }
+  .media-meta { font-size: 12px; color: var(--muted); }
+  .media-meta a { color: var(--accent); text-decoration: none; }
+  .media-meta a:hover { text-decoration: underline; }
+
+  .info-col { padding: 20px; flex: 1; min-width: 0; }
+  .info-col h2 { font-size: 18px; margin: 0 0 8px; }
+  .body-text { font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; margin-bottom: 14px; }
+
+  .root-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--chip-bg); color: var(--chip-text);
+    font-size: 12px; font-weight: 600;
+    padding: 5px 12px; border-radius: 999px;
+    margin-bottom: 14px;
+  }
+
+  .fact-table { display: grid; grid-template-columns: 110px 1fr; gap: 6px 14px; font-size: 13px; margin-bottom: 14px; }
+  .fact-table .k { color: var(--muted); }
+  .fact-table .v { color: var(--text); }
+
+  .applicability {
+    background: var(--warn-bg); color: var(--warn-text);
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 13px; line-height: 1.55;
+    margin-bottom: 14px;
+  }
+  .applicability .k { display: block; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+
+  .story-box {
+    background: var(--good-bg); color: var(--good-text);
+    border-radius: 10px; padding: 14px 16px;
+    font-size: 14px; font-style: italic; line-height: 1.55;
+    margin-bottom: 14px;
+  }
+  .story-box .k { display: block; font-style: normal; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; color: var(--muted); }
+
+  details.storyboard { font-size: 13px; }
+  details.storyboard summary {
+    cursor: pointer; color: var(--accent); font-weight: 600;
+    list-style: none;
+  }
+  details.storyboard summary::-webkit-details-marker { display: none; }
+  details.storyboard summary::before { content: "▶ "; }
+  details.storyboard[open] summary::before { content: "▼ "; }
+  .storyboard-grid { margin-top: 10px; display: grid; grid-template-columns: 90px 1fr; gap: 6px 14px; }
+  .storyboard-grid .k { color: var(--muted); }
+
+  #empty { text-align: center; color: var(--muted); padding: 60px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Creative Review</h1>
+  <span class="count" id="status">Loading...</span>
+</header>
+
+<main id="main">
+  <div id="empty" style="display:none">No creative analyses found — run analysis.run_creative_analysis first.</div>
+</main>
+
+<script>
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function cardHtml(a) {
+  const img = (a.local_image_paths || [])[0] || '';
+  const copies = a.collation_count && a.collation_count > 1 ? `, ${a.collation_count} copies` : '';
+  const running = a.running_days != null ? `running ${a.running_days} days` : '';
+
+  const storyboardRows = (a.storyboard || []).map(s =>
+    `<div class="k">${escapeHtml(s.section)}</div><div>${escapeHtml(s.description)}</div>`
+  ).join('');
+
+  return `
+    <div class="card">
+      <div class="media-col">
+        <img src="${img}" alt="">
+        <div class="media-meta">${escapeHtml(a.page_name)}${running ? ', ' + running : ''}${copies}</div>
+        <div class="media-meta"><a href="${a.ad_library_url}" target="_blank" rel="noopener">Open in Meta Ad Library</a></div>
+      </div>
+      <div class="info-col">
+        <h2>${escapeHtml(a.title || a.page_name)}</h2>
+        <div class="body-text">${escapeHtml(a.body_text || '')}</div>
+
+        <span class="root-badge">${escapeHtml(a.creative_root)}</span>
+
+        <div class="fact-table">
+          <div class="k">Mechanism</div><div class="v">${escapeHtml(a.mechanism)}</div>
+          <div class="k">Visual motif</div><div class="v">${escapeHtml(a.visual_motif)}</div>
+        </div>
+
+        <div class="applicability">
+          <span class="k">Might work for us</span>
+          ${escapeHtml(a.applicability)}
+        </div>
+
+        <div class="story-box">
+          <span class="k">Story</span>
+          "${escapeHtml(a.story)}"
+        </div>
+
+        <details class="storyboard">
+          <summary>Storyboard</summary>
+          <div class="storyboard-grid">${storyboardRows}</div>
+        </details>
+      </div>
+    </div>
+  `;
+}
+
+async function load() {
+  const status = document.getElementById('status');
+  const main = document.getElementById('main');
+  const empty = document.getElementById('empty');
+
+  let data;
+  try {
+    const res = await fetch('data/creative_analysis.json', { cache: 'no-store' });
+    data = await res.json();
+  } catch (e) {
+    status.textContent = 'Failed to load data/creative_analysis.json';
+    return;
+  }
+
+  const ads = Object.values(data);
+  if (ads.length === 0) {
+    empty.style.display = 'block';
+    status.textContent = '0 ads';
+    return;
+  }
+
+  status.textContent = `${ads.length} ads analyzed`;
+  main.innerHTML = ads.map(cardHtml).join('');
+}
+
+load();
+</script>
+</body>
+</html>

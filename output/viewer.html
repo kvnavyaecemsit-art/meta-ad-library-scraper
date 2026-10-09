@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ad Library Gallery</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --panel: #ffffff;
+    --border: #e3e3e6;
+    --text: #16161a;
+    --muted: #6b6b74;
+    --accent: #2f6fed;
+    --chip-bg: #eef2fe;
+    --chip-text: #2f4faa;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15161a;
+      --panel: #1e1f24;
+      --border: #33343a;
+      --text: #e9e9ee;
+      --muted: #97979f;
+      --accent: #6fa1ff;
+      --chip-bg: #232a42;
+      --chip-text: #a9c1ff;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 16px 0 0;
+    white-space: nowrap;
+  }
+  select, input[type="text"] {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  input[type="text"] { flex: 1; min-width: 160px; }
+  label.toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  #status { font-size: 12px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+  main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover { border-color: var(--accent); }
+  .thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background: var(--bg);
+    display: block;
+  }
+  .thumb.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+  }
+  .card-body { padding: 10px 12px 12px; flex: 1; }
+  .card-brand {
+    display: inline-block;
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+  }
+  .card-page { font-size: 13px; font-weight: 600; margin: 0 0 4px; }
+  .card-text {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-meta { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  #empty { color: var(--muted); padding: 60px 0; text-align: center; font-size: 14px; }
+
+  #overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 100;
+  }
+  #overlay.open { display: flex; }
+  #modal {
+    background: var(--panel);
+    border-radius: 14px;
+    max-width: 900px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  @media (min-width: 700px) {
+    #modal { flex-direction: row; }
+    #modal .media-col { width: 55%; }
+    #modal .info-col { width: 45%; }
+  }
+  .media-col { background: var(--bg); }
+  .media-col img { width: 100%; display: block; }
+  .media-strip { display: flex; gap: 6px; padding: 8px; overflow-x: auto; }
+  .media-strip img { width: 64px; height: 64px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: 0.6; flex-shrink: 0; }
+  .media-strip img.active { opacity: 1; outline: 2px solid var(--accent); }
+  .info-col { padding: 20px; }
+  .info-col h2 { font-size: 16px; margin: 0 0 4px; }
+  .info-col .sub { color: var(--muted); font-size: 12px; margin-bottom: 14px; }
+  .info-col .body-text { font-size: 14px; line-height: 1.5; margin-bottom: 14px; white-space: pre-wrap; }
+  .visual-story {
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--chip-bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+  }
+  .visual-story .k {
+    display: block;
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--chip-text);
+    margin-bottom: 4px;
+  }
+  .field { margin-bottom: 10px; font-size: 12px; }
+  .field .k { color: var(--muted); display: block; margin-bottom: 2px; }
+  .field .v a { color: var(--accent); text-decoration: none; word-break: break-all; }
+  #closeBtn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    width: 30px; height: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Ad Library Gallery</h1>
+  <select id="brandFilter"><option value="__all__">All brands</option></select>
+  <input type="text" id="search" placeholder="Search page, title, body text...">
+  <label class="toggle"><input type="checkbox" id="activeOnly"> Active only</label>
+  <span id="status">Loading...</span>
+</header>
+
+<main>
+  <div id="grid"></div>
+  <div id="empty" style="display:none">No ads match this filter.</div>
+</main>
+
+<div id="overlay">
+  <div id="modal" style="position:relative">
+    <button id="closeBtn">✕</button>
+    <div class="media-col">
+      <img id="modalMainImg" src="" alt="">
+      <div class="media-strip" id="modalStrip"></div>
+    </div>
+    <div class="info-col" id="modalInfo"></div>
+  </div>
+</div>
+
+<script>
+let allAds = [];
+
+async function loadManifest() {
+  const res = await fetch('data/manifest.json', { cache: 'no-store' });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+async function loadAds() {
+  const status = document.getElementById('status');
+  const manifest = await loadManifest();
+  if (manifest.length === 0) {
+    status.textContent = 'No scrape runs found in output/data/manifest.json';
+    return;
+  }
+
+  const brandSet = new Set(manifest.map(e => e.brand));
+  const brandFilter = document.getElementById('brandFilter');
+  [...brandSet].sort().forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b; opt.textContent = b;
+    brandFilter.appendChild(opt);
+  });
+
+  const seen = new Map();
+  for (const entry of manifest) {
+    try {
+      const res = await fetch('data/' + entry.file, { cache: 'no-store' });
+      const ads = await res.json();
+      for (const ad of ads) {
+        const key = ad.ad_archive_id || (entry.file + Math.random());
+        if (!seen.has(key)) seen.set(key, ad);
+      }
+    } catch (e) {
+      console.warn('Failed to load', entry.file, e);
+    }
+  }
+
+  try {
+    const storiesRes = await fetch('data/stories.json', { cache: 'no-store' });
+    if (storiesRes.ok) {
+      const stories = await storiesRes.json();
+      for (const ad of seen.values()) {
+        if (ad.ad_archive_id && stories[ad.ad_archive_id]) {
+          ad.visual_story = stories[ad.ad_archive_id];
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load stories.json', e);
+  }
+
+  allAds = [...seen.values()];
+  status.textContent = `${allAds.length} ads loaded across ${manifest.length} run(s)`;
+  render();
+}
+
+function matchesFilters(ad) {
+  const brand = document.getElementById('brandFilter').value;
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const activeOnly = document.getElementById('activeOnly').checked;
+
+  if (brand !== '__all__' && ad.brand !== brand) return false;
+  if (activeOnly && !ad.is_active) return false;
+  if (q) {
+    const hay = [ad.page_name, ad.title, ad.body_text, ad.cta_text, ad.caption, ad.visual_story]
+      .filter(Boolean).join(' ').toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+
+function cardHtml(ad, idx) {
+  const img = (ad.local_image_paths || [])[0];
+  const thumb = img
+    ? `<img class="thumb" src="${img}" loading="lazy" alt="">`
+    : `<div class="thumb placeholder">No image</div>`;
+  const bodyText = ad.body_text || ad.title || '(no text)';
+  return `
+    <div class="card" data-idx="${idx}">
+      ${thumb}
+      <div class="card-body">
+        <span class="card-brand">${escapeHtml(ad.brand || '')}</span>
+        <p class="card-page">${escapeHtml(ad.page_name || 'Unknown page')}</p>
+        <p class="card-text">${escapeHtml(bodyText)}</p>
+        <p class="card-meta">${ad.is_active ? '🟢 Active' : '⚪ Inactive'} · ${(ad.local_image_paths || []).length} media</p>
+      </div>
+    </div>`;
+}
+
+let filtered = [];
+
+function render() {
+  filtered = allAds.filter(matchesFilters);
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = filtered.map((ad, i) => cardHtml(ad, i)).join('');
+  grid.querySelectorAll('.card').forEach(el => {
+    el.addEventListener('click', () => openModal(filtered[+el.dataset.idx]));
+  });
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function openModal(ad) {
+  const overlay = document.getElementById('overlay');
+  const mainImg = document.getElementById('modalMainImg');
+  const strip = document.getElementById('modalStrip');
+  const info = document.getElementById('modalInfo');
+
+  const media = ad.local_image_paths || [];
+  mainImg.src = media[0] || '';
+
+  strip.innerHTML = media.map((m, i) =>
+    `<img src="${m}" data-i="${i}" class="${i === 0 ? 'active' : ''}">`
+  ).join('');
+  strip.querySelectorAll('img').forEach(el => {
+    el.addEventListener('click', () => {
+      mainImg.src = el.src;
+      strip.querySelectorAll('img').forEach(x => x.classList.remove('active'));
+      el.classList.add('active');
+    });
+  });
+
+  const field = (k, v) => v ? `<div class="field"><span class="k">${k}</span><span class="v">${v}</span></div>` : '';
+
+  const storyHtml = ad.visual_story
+    ? `<div class="visual-story"><span class="k">Visual story (Gemini)</span>"${escapeHtml(ad.visual_story)}"</div>`
+    : '';
+
+  info.innerHTML = `
+    <h2>${escapeHtml(ad.page_name || 'Unknown page')}</h2>
+    <div class="sub">${escapeHtml(ad.brand || '')} · ${ad.is_active ? 'Active' : 'Inactive'} · ${escapeHtml(ad.display_format || '')}</div>
+    ${storyHtml}
+    <div class="body-text">${escapeHtml(ad.body_text || ad.title || '(no ad text)')}</div>
+    ${field('Title', escapeHtml(ad.title || ''))}
+    ${field('CTA', escapeHtml([ad.cta_text, ad.cta_type].filter(Boolean).join(' · ')))}
+    ${field('Link', ad.link_url ? `<a href="${ad.link_url}" target="_blank" rel="noopener">${escapeHtml(ad.link_url)}</a>` : '')}
+    ${field('Platforms', escapeHtml((ad.publisher_platform || []).join(', ')))}
+    ${field('Start date', escapeHtml(ad.start_date || ''))}
+    ${field('End date', escapeHtml(ad.end_date || ''))}
+    ${field('Ad Archive ID', escapeHtml(ad.ad_archive_id || ''))}
+  `;
+
+  overlay.classList.add('open');
+}
+
+document.getElementById('closeBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('open');
+});
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target.id === 'overlay') e.currentTarget.classList.remove('open');
+});
+document.getElementById('brandFilter').addEventListener('change', render);
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('activeOnly').addEventListener('change', render);
+
+loadAds();
+</script>
+</body>
+</html>
